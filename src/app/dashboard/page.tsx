@@ -28,10 +28,6 @@ type Errors = {
   waste: boolean[];
 };
 
-
-
-
-
 const DashboardPage: React.FC = () => {
   const router = useRouter();
   const [metrics, setMetrics] = useState<Metrics>({
@@ -40,6 +36,7 @@ const DashboardPage: React.FC = () => {
     waste: [0, 0, 0, 0, 0],
   });
 
+  const [years, setYears] = useState<string[]>(["2018", "2019", "2020", "2021", "2022"]);
   const [errors, setErrors] = useState<Errors>({
     carbon: [false, false, false, false, false],
     water: [false, false, false, false, false],
@@ -52,29 +49,27 @@ const DashboardPage: React.FC = () => {
     waste: [100, 90, 80, 70, 60],
   };
 
-  const labels = ["2018", "2019", "2020", "2021", "2022"];
-
-  const createChartData = (userMetric: number[], benchmarkMetric: number[], userLabel: string, benchmarkLabel: string, userColor: string, benchmarkColor: string) => ({
-    labels,
+  const createIndividualChartData = (metricType: keyof Metrics) => ({
+    labels: years,
     datasets: [
       {
-        label: userLabel,
-        data: userMetric,
-        borderColor: userColor,
+        label: `User ${metricType.charAt(0).toUpperCase() + metricType.slice(1)}`,
+        data: metrics[metricType],
+        borderColor: metricType === 'carbon' ? '#1E3A8A' : metricType === 'water' ? '#34D399' : '#F472B6',
         fill: false,
       },
       {
-        label: benchmarkLabel,
-        data: benchmarkMetric,
-        borderColor: benchmarkColor,
+        label: `Benchmark ${metricType.charAt(0).toUpperCase() + metricType.slice(1)}`,
+        data: benchmarks[metricType],
+        borderColor: '#FF5733',
         borderDash: [5, 5],
         fill: false,
-      }
-    ]
+      },
+    ],
   });
 
-  const combinedChartData = {
-    labels,
+  const createCombinedChartData = () => ({
+    labels: years,
     datasets: [
       {
         label: "User Carbon Emissions",
@@ -116,7 +111,7 @@ const DashboardPage: React.FC = () => {
         fill: false,
       },
     ],
-  };
+  });
 
   const handleMetricChange = (metricType: keyof Metrics, index: number, value: string) => {
     const parsedValue = parseFloat(value);
@@ -138,25 +133,57 @@ const DashboardPage: React.FC = () => {
     }
   };
 
+  const handleYearChange = (index: number, value: string) => {
+    setYears((prevYears) => {
+      const newYears = [...prevYears];
+      newYears[index] = value;
+      return newYears;
+    });
+  };
+
   useEffect(() => {
     if (!localStorage.getItem('user1')) {
       router.push('/login');
     }
   }, []);
+
   const handleLogout = () => {
     localStorage.removeItem('user1');
     router.push('/login');
   };
 
   const handleExportCSV = () => {
-    const data = labels.map((year, index) => ({
-      Year: year,
-      Carbon: metrics.carbon[index],
-      Water: metrics.water[index],
-      Waste: metrics.waste[index],
-    }));
-
-    const csv = Papa.unparse(data);
+    const getColorLabel = (percentage:any) => {
+      if (percentage >= 91) return "dark red";
+      if (percentage >= 61) return "red";
+      if (percentage >= 31) return "orange";
+      return "green";
+    };
+  
+    const data = years.map((year, index) => {
+      const carbonPercentage = ((metrics.carbon[index] / benchmarks.carbon[index]) * 100).toFixed(2);
+      const waterPercentage = ((metrics.water[index] / benchmarks.water[index]) * 100).toFixed(2);
+      const wastePercentage = ((metrics.waste[index] / benchmarks.waste[index]) * 100).toFixed(2);
+  
+      return {
+        Year: year,
+        Carbon: metrics.carbon[index],
+        CarbonPercentage: `${carbonPercentage}% (${getColorLabel(carbonPercentage)})`,
+        Water: metrics.water[index],
+        WaterPercentage: `${waterPercentage}% (${getColorLabel(waterPercentage)})`,
+        Waste: metrics.waste[index],
+        WastePercentage: `${wastePercentage}% (${getColorLabel(wastePercentage)})`,
+      };
+    });
+  
+    const averages = {
+      AverageCarbon: (metrics.carbon.reduce((sum, value) => sum + value, 0) / metrics.carbon.length).toFixed(2),
+      AverageWater: (metrics.water.reduce((sum, value) => sum + value, 0) / metrics.water.length).toFixed(2),
+      AverageWaste: (metrics.waste.reduce((sum, value) => sum + value, 0) / metrics.waste.length).toFixed(2),
+    };
+  
+    const csvData = [...data, { Year: 'Average', ...averages }];
+    const csv = Papa.unparse(csvData);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -165,6 +192,7 @@ const DashboardPage: React.FC = () => {
     link.click();
     document.body.removeChild(link);
   };
+  
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen flex flex-col">
@@ -173,16 +201,32 @@ const DashboardPage: React.FC = () => {
         <button onClick={handleLogout} className="px-4 py-2 bg-red-600 text-white rounded-lg">Logout</button>
       </header>
 
-      {/* Input Fields */}
+      {/* Input Fields for Years and Metrics */}
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold mb-2">Years</h2>
+        <div className="grid grid-cols-5 gap-4">
+          {years.map((year, index) => (
+            <input
+              key={`year-${index}`}
+              type="text"
+              value={year}
+              onChange={(e) => handleYearChange(index, e.target.value)}
+              className="border px-2 py-1 rounded border-gray-300"
+              placeholder={`Year ${index + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+
       {["carbon", "water", "waste"].map((metricType) => (
         <div key={metricType} className="mb-6">
           <h2 className="text-lg font-semibold mb-2">
             {metricType.charAt(0).toUpperCase() + metricType.slice(1)} Usage
           </h2>
           <div className="grid grid-cols-5 gap-4">
-            {labels.map((year, index) => (
+            {years.map((year, index) => (
               <input
-                key={year}
+                key={`${metricType}-${index}`}
                 type="number"
                 value={metrics[metricType as keyof Metrics][index]}
                 onChange={(e) => handleMetricChange(metricType as keyof Metrics, index, e.target.value)}
@@ -194,27 +238,22 @@ const DashboardPage: React.FC = () => {
         </div>
       ))}
 
-      {/* Individual Charts */}
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">Carbon Emissions (tons)</h2>
-        <Line data={createChartData(metrics.carbon, benchmarks.carbon, "User Carbon Emissions", "Benchmark Carbon Emissions", "#1E3A8A", "#FF5733")} options={{ responsive: true }} />
-      </div>
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">Water Usage (liters)</h2>
-        <Line data={createChartData(metrics.water, benchmarks.water, "User Water Usage", "Benchmark Water Usage", "#34D399", "#FFBB33")} options={{ responsive: true }} />
-      </div>
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">Waste Generated (kg)</h2>
-        <Line data={createChartData(metrics.waste, benchmarks.waste, "User Waste Generated", "Benchmark Waste Generated", "#F472B6", "#FF33A6")} options={{ responsive: true }} />
-      </div>
+      {/* Individual Charts for Each Metric */}
+      {["carbon", "water", "waste"].map((metricType) => (
+        <div key={metricType} className="mb-6">
+          <h2 className="text-lg font-semibold mb-2">{metricType.charAt(0).toUpperCase() + metricType.slice(1)} Metrics</h2>
+          <Line data={createIndividualChartData(metricType as keyof Metrics)} />
+        </div>
+      ))}
 
+      {/* Combined Chart */}
       <div className="mb-6">
         <h2 className="text-lg font-semibold mb-2">Combined Metrics</h2>
-        <Line data={combinedChartData} options={{ responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: 'Sustainability Metrics Over the Years' } }}} />
+        <Line data={createCombinedChartData()} />
       </div>
 
-      <button onClick={handleExportCSV} className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-lg">
-        Export to CSV
+      <button onClick={handleExportCSV} className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg">
+        Export CSV
       </button>
     </div>
   );

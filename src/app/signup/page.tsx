@@ -31,7 +31,7 @@ const LoginPage = () => {
     }
 
     // Simple login logic for demo purposes
-    const res = await axios.post('/api/signin', { email, password });
+    const res = await axios.post('/api/signup', { email, password });
     if (res.data.success) {
       // Store user identifier in local storage
       localStorage.setItem('user1', 'true');
@@ -45,7 +45,7 @@ const LoginPage = () => {
   return (
     <div className="flex items-center justify-center h-screen bg-gray-50">
       <form onSubmit={handleSubmit} className="w-full max-w-md p-6 bg-white rounded shadow-md">
-        <h2 className="text-2xl font-semibold text-center text-orenBlue">Login</h2>
+        <h2 className="text-2xl font-semibold text-center text-orenBlue">Signup</h2>
         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
         <input
           type="email"
@@ -67,7 +67,7 @@ const LoginPage = () => {
           type="submit"
           className="w-full px-4 py-2 mt-4 font-semibold text-white bg-orenBlue rounded-md"
         >
-          Login
+          Signup
         </button>
       </form>
     </div>

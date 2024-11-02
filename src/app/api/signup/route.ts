@@ -21,7 +21,7 @@ export const POST = async (req:NextRequest) => {
 
         const user = await User.create({ email, password });
 
-        return NextResponse.json({ email: user.email });
+        return NextResponse.json({ email: user.email,success:true }, { status: 201 });
 
     
     }catch(error:any){

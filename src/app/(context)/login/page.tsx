@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { login } from '@/redux/slice/authSlice';
 import axios from 'axios';
+import Link from 'next/link';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -69,6 +70,13 @@ const LoginPage = () => {
         >
           Login
         </button>
+
+        <p className="mt-4 text-center">
+          Don't have an account?{' '}
+          <Link href="/signup" className="text-orenBlue hover:underline">
+            Sign up
+          </Link>
+        </p>
       </form>
     </div>
   );

@@ -2,6 +2,7 @@ import connectDB from "@/db/db";
 import User from "@/models/user.model";
 import { NextResponse,NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 
 
 export const POST = async (req:NextRequest) => {
@@ -20,9 +21,13 @@ export const POST = async (req:NextRequest) => {
             return NextResponse.json({ error: "User does not exist" }, { status: 400 });
         }
 
-        if(user.password !== password){
+        const comparePassword = await bcrypt.compare(password, user.password);
+
+
+        if(!comparePassword){
             return NextResponse.json({ error: "Invalid credentials" }, { status: 400 });
         }
+
 
         const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET!,{expiresIn: "1h"});
 

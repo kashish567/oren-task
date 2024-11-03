@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import Link from 'next/link';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -69,6 +70,12 @@ const LoginPage = () => {
         >
           Signup
         </button>
+        <p className="mt-4 text-center">
+          Already have an account?{' '}
+          <Link href="/login" className="text-orenBlue hover:underline">
+            Login
+          </Link>
+        </p>
       </form>
     </div>
   );

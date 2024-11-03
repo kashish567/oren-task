@@ -19,9 +19,14 @@ const LandingPage: React.FC = () => {
               Empowering industrial companies to measure, improve, and achieve
               sustainability goals with Oren's B2B software solutions.
             </p>
-            <Link href="/login">
+            <Link href="/login" className="px-5">
               <button className="mt-8 px-6 py-3 bg-orenBlue text-white font-semibold rounded-md shadow hover:bg-orenBlue-dark transition-colors">
                 Login
+              </button>
+            </Link>
+            <Link href="/signup">
+              <button className="mt-8 px-6 py-3 bg-orenBlue text-white font-semibold rounded-md shadow hover:bg-orenBlue-dark transition-colors">
+                Signup
               </button>
             </Link>
           </div>

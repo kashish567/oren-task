@@ -13,6 +13,9 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '@/redux/slice/authSlice';
+import { RootState } from '@/redux/store';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -48,6 +51,15 @@ const DashboardPage: React.FC = () => {
     water: [200, 180, 160, 140, 120],
     waste: [100, 90, 80, 70, 60],
   };
+
+  const dispatch = useDispatch();
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+    }
+  }, []);
 
   const createIndividualChartData = (metricType: keyof Metrics) => ({
     labels: years,
@@ -141,14 +153,10 @@ const DashboardPage: React.FC = () => {
     });
   };
 
-  useEffect(() => {
-    if (!localStorage.getItem('user1')) {
-      router.push('/login');
-    }
-  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('user1');
+    dispatch(logout());
     router.push('/login');
   };
 

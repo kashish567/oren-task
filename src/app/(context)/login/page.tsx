@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useDispatch } from 'react-redux';
+import { login } from '@/redux/slice/authSlice';
 import axios from 'axios';
 
 const LoginPage = () => {
@@ -9,16 +11,10 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const dispatch = useDispatch();
 
   // Regex for validating email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  useEffect(() => {
-    if(localStorage.getItem('user1')) {
-      router.push('/dashboard');
-    }
-    
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +31,10 @@ const LoginPage = () => {
     if (res.data.success) {
       // Store user identifier in local storage
       localStorage.setItem('user1', 'true');
+      const user = {
+        email: res.data.email
+      };
+      dispatch(login(user));
       // Redirect to dashboard after successful login
       router.push('/dashboard');
     } else {

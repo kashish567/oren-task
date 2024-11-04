@@ -23,3 +23,12 @@ Tech Stack:
 Next.js for front-end framework
 
 MongoDB for data storage
+
+MongoDB Setup:
+
+Set up a MongoDB database and update your environment variables to include your MongoDB URI.
+
+
+Deployment:
+
+The easiest way to deploy this app is via Vercel, where you can connect your GitHub repository and follow the setup instructions.

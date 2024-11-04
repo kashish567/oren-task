@@ -1,36 +1,21 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Oren Sustainability Dashboard
+This is a Next.js project bootstrapped with create-next-app. It serves as an interactive sustainability dashboard for Oren, a B2B software company focused on helping industrial companies measure and improve their sustainability metrics.
 
-## Getting Started
+Features
+Login Page
+User authentication with a login form for email and password.
+Basic validation, including required fields and email format.
+Redirects the user to the dashboard on successful login.
+Responsive design for both desktop and mobile views.
 
-First, run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Sustainability Dashboard
+Interactive dashboard where users can input sustainability metrics (e.g., carbon emissions, water usage, waste generated) for the past 5 years.
+Real-time data visualization with time series graphs that update as the user inputs new data.
+Industry benchmark comparisons using dummy data.
+Option to export the data as a CSV file.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Tech Stack
+Next.js for front-end framework
+MongoDB for data storage

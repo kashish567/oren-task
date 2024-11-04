@@ -59,7 +59,7 @@ const DashboardPage: React.FC = () => {
     if (!isAuthenticated) {
       router.push('/login');
     }
-  }, []);
+  }, [isAuthenticated, router]);
 
   const createIndividualChartData = (metricType: keyof Metrics) => ({
     labels: years,

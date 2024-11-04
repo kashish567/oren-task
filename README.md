@@ -5,6 +5,7 @@ This is a Next.js project bootstrapped with create-next-app. It serves as an int
 Features:
 
 Login Page
+
 User authentication with a login form for email and password.
 Basic validation, including required fields and email format.
 Redirects the user to the dashboard on successful login.

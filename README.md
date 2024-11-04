@@ -18,6 +18,8 @@ Industry benchmark comparisons using dummy data.
 Option to export the data as a CSV file.
 
 
-Tech Stack
+Tech Stack:
+
 Next.js for front-end framework
+
 MongoDB for data storage

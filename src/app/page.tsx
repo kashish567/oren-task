@@ -8,7 +8,7 @@ const LandingPage: React.FC = () => {
       {/* Hero Section */}
       <header
         className="relative w-full h-screen flex items-center justify-center bg-cover bg-center"
-        style={{ backgroundImage: "url(download.jpeg)" }}
+        style={{ backgroundImage: "url(image.jpg)" }}
       >
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="relative text-center text-white">

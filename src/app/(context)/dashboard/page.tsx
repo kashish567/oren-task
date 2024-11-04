@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState } from 'react';
-import { Line } from 'react-chartjs-2';
-import { useRouter } from 'next/navigation';
-import Papa from 'papaparse';
+import { useEffect, useState } from "react";
+import { Line } from "react-chartjs-2";
+import { useRouter } from "next/navigation";
+import Papa from "papaparse";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -11,13 +11,21 @@ import {
   LineElement,
   Title,
   Tooltip,
-  Legend
-} from 'chart.js';
-import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '@/redux/slice/authSlice';
-import { RootState } from '@/redux/store';
+  Legend,
+} from "chart.js";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "@/redux/slice/authSlice";
+import { RootState } from "@/redux/store";
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 type Metrics = {
   carbon: number[];
@@ -39,7 +47,13 @@ const DashboardPage: React.FC = () => {
     waste: [0, 0, 0, 0, 0],
   });
 
-  const [years, setYears] = useState<string[]>(["2018", "2019", "2020", "2021", "2022"]);
+  const [years, setYears] = useState<string[]>([
+    "2018",
+    "2019",
+    "2020",
+    "2021",
+    "2022",
+  ]);
   const [errors, setErrors] = useState<Errors>({
     carbon: [false, false, false, false, false],
     water: [false, false, false, false, false],
@@ -53,11 +67,13 @@ const DashboardPage: React.FC = () => {
   };
 
   const dispatch = useDispatch();
-  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+  const isAuthenticated = useSelector(
+    (state: RootState) => state.auth.isAuthenticated
+  );
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push('/login');
+      router.push("/login");
     }
   }, [isAuthenticated, router]);
 
@@ -65,15 +81,24 @@ const DashboardPage: React.FC = () => {
     labels: years,
     datasets: [
       {
-        label: `User ${metricType.charAt(0).toUpperCase() + metricType.slice(1)}`,
+        label: `User ${
+          metricType.charAt(0).toUpperCase() + metricType.slice(1)
+        }`,
         data: metrics[metricType],
-        borderColor: metricType === 'carbon' ? '#1E3A8A' : metricType === 'water' ? '#34D399' : '#F472B6',
+        borderColor:
+          metricType === "carbon"
+            ? "#1E3A8A"
+            : metricType === "water"
+            ? "#34D399"
+            : "#F472B6",
         fill: false,
       },
       {
-        label: `Benchmark ${metricType.charAt(0).toUpperCase() + metricType.slice(1)}`,
+        label: `Benchmark ${
+          metricType.charAt(0).toUpperCase() + metricType.slice(1)
+        }`,
         data: benchmarks[metricType],
-        borderColor: '#FF5733',
+        borderColor: "#FF5733",
         borderDash: [5, 5],
         fill: false,
       },
@@ -125,12 +150,18 @@ const DashboardPage: React.FC = () => {
     ],
   });
 
-  const handleMetricChange = (metricType: keyof Metrics, index: number, value: string) => {
+  const handleMetricChange = (
+    metricType: keyof Metrics,
+    index: number,
+    value: string
+  ) => {
     const parsedValue = parseFloat(value);
 
     setErrors((prevErrors) => ({
       ...prevErrors,
-      [metricType]: prevErrors[metricType].map((error, i) => i === index ? (isNaN(parsedValue) || parsedValue < 0) : error),
+      [metricType]: prevErrors[metricType].map((error, i) =>
+        i === index ? isNaN(parsedValue) || parsedValue < 0 : error
+      ),
     }));
 
     if (!isNaN(parsedValue) && parsedValue >= 0) {
@@ -140,7 +171,7 @@ const DashboardPage: React.FC = () => {
           ...prevMetrics[metricType].slice(0, index),
           parsedValue,
           ...prevMetrics[metricType].slice(index + 1),
-        ]
+        ],
       }));
     }
   };
@@ -153,60 +184,91 @@ const DashboardPage: React.FC = () => {
     });
   };
 
-
   const handleLogout = () => {
-    localStorage.removeItem('user1');
+    localStorage.removeItem("user1");
     dispatch(logout());
-    router.push('/login');
+    router.push("/login");
   };
+  // ... existing types and component definition
 
   const handleExportCSV = () => {
-    const getColorLabel = (percentage:any) => {
+    const getColorLabel = (percentage: number) => {
+      // Change from any to number
       if (percentage >= 91) return "dark red";
       if (percentage >= 61) return "red";
       if (percentage >= 31) return "orange";
       return "green";
     };
-  
+
     const data = years.map((year, index) => {
-      const carbonPercentage = ((metrics.carbon[index] / benchmarks.carbon[index]) * 100).toFixed(2);
-      const waterPercentage = ((metrics.water[index] / benchmarks.water[index]) * 100).toFixed(2);
-      const wastePercentage = ((metrics.waste[index] / benchmarks.waste[index]) * 100).toFixed(2);
-  
+      const carbonPercentage = (
+        (metrics.carbon[index] / benchmarks.carbon[index]) *
+        100
+      ).toFixed(2);
+      const waterPercentage = (
+        (metrics.water[index] / benchmarks.water[index]) *
+        100
+      ).toFixed(2);
+      const wastePercentage = (
+        (metrics.waste[index] / benchmarks.waste[index]) *
+        100
+      ).toFixed(2);
+
       return {
         Year: year,
         Carbon: metrics.carbon[index],
-        CarbonPercentage: `${carbonPercentage}% (${getColorLabel(carbonPercentage)})`,
+        CarbonPercentage: `${carbonPercentage}% (${getColorLabel(
+          parseFloat(carbonPercentage)
+        )})`, // Ensure conversion to number
         Water: metrics.water[index],
-        WaterPercentage: `${waterPercentage}% (${getColorLabel(waterPercentage)})`,
+        WaterPercentage: `${waterPercentage}% (${getColorLabel(
+          parseFloat(waterPercentage)
+        )})`, // Ensure conversion to number
         Waste: metrics.waste[index],
-        WastePercentage: `${wastePercentage}% (${getColorLabel(wastePercentage)})`,
+        WastePercentage: `${wastePercentage}% (${getColorLabel(
+          parseFloat(wastePercentage)
+        )})`, // Ensure conversion to number
       };
     });
-  
+
     const averages = {
-      AverageCarbon: (metrics.carbon.reduce((sum, value) => sum + value, 0) / metrics.carbon.length).toFixed(2),
-      AverageWater: (metrics.water.reduce((sum, value) => sum + value, 0) / metrics.water.length).toFixed(2),
-      AverageWaste: (metrics.waste.reduce((sum, value) => sum + value, 0) / metrics.waste.length).toFixed(2),
+      AverageCarbon: (
+        metrics.carbon.reduce((sum, value) => sum + value, 0) /
+        metrics.carbon.length
+      ).toFixed(2),
+      AverageWater: (
+        metrics.water.reduce((sum, value) => sum + value, 0) /
+        metrics.water.length
+      ).toFixed(2),
+      AverageWaste: (
+        metrics.waste.reduce((sum, value) => sum + value, 0) /
+        metrics.waste.length
+      ).toFixed(2),
     };
-  
-    const csvData = [...data, { Year: 'Average', ...averages }];
+
+    const csvData = [...data, { Year: "Average", ...averages }];
     const csv = Papa.unparse(csvData);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.setAttribute('download', 'sustainability_metrics.csv');
+    link.setAttribute("download", "sustainability_metrics.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
-  
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen flex flex-col">
       <header className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-orenBlue">Sustainability Dashboard</h1>
-        <button onClick={handleLogout} className="px-4 py-2 bg-red-600 text-white rounded-lg">Logout</button>
+        <h1 className="text-3xl font-bold text-orenBlue">
+          Sustainability Dashboard
+        </h1>
+        <button
+          onClick={handleLogout}
+          className="px-4 py-2 bg-red-600 text-white rounded-lg"
+        >
+          Logout
+        </button>
       </header>
 
       {/* Input Fields for Years and Metrics */}
@@ -237,8 +299,18 @@ const DashboardPage: React.FC = () => {
                 key={`${metricType}-${index}`}
                 type="number"
                 value={metrics[metricType as keyof Metrics][index]}
-                onChange={(e) => handleMetricChange(metricType as keyof Metrics, index, e.target.value)}
-                className={`border px-2 py-1 rounded ${errors[metricType as keyof Errors][index] ? 'border-red-500' : 'border-gray-300'}`}
+                onChange={(e) =>
+                  handleMetricChange(
+                    metricType as keyof Metrics,
+                    index,
+                    e.target.value
+                  )
+                }
+                className={`border px-2 py-1 rounded ${
+                  errors[metricType as keyof Errors][index]
+                    ? "border-red-500"
+                    : "border-gray-300"
+                }`}
                 placeholder={year}
               />
             ))}
@@ -249,7 +321,9 @@ const DashboardPage: React.FC = () => {
       {/* Individual Charts for Each Metric */}
       {["carbon", "water", "waste"].map((metricType) => (
         <div key={metricType} className="mb-6">
-          <h2 className="text-lg font-semibold mb-2">{metricType.charAt(0).toUpperCase() + metricType.slice(1)} Metrics</h2>
+          <h2 className="text-lg font-semibold mb-2">
+            {metricType.charAt(0).toUpperCase() + metricType.slice(1)} Metrics
+          </h2>
           <Line data={createIndividualChartData(metricType as keyof Metrics)} />
         </div>
       ))}
@@ -260,7 +334,10 @@ const DashboardPage: React.FC = () => {
         <Line data={createCombinedChartData()} />
       </div>
 
-      <button onClick={handleExportCSV} className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg">
+      <button
+        onClick={handleExportCSV}
+        className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg"
+      >
         Export CSV
       </button>
     </div>

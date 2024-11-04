@@ -1,4 +1,5 @@
 Oren Sustainability Dashboard
+
 This is a Next.js project bootstrapped with create-next-app. It serves as an interactive sustainability dashboard for Oren, a B2B software company focused on helping industrial companies measure and improve their sustainability metrics.
 
 Features:

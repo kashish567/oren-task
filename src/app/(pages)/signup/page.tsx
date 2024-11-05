@@ -39,8 +39,7 @@ const SignupPage = () => {
     // Simple login logic for demo purposes
     const res = await axios.post('/api/signup', { email, password });
     if (res.data.success) {
-      // Store user identifier in local storage
-      localStorage.setItem('user1', 'true');
+      
       // Redirect to dashboard after successful login
       router.push('/dashboard');
     } else {

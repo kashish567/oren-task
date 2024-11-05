@@ -177,58 +177,87 @@ const DashboardPage: React.FC = () => {
   };
 
   const handleYearChange = (index: number, value: string) => {
-    setYears((prevYears) => {
-      const newYears = [...prevYears];
-      newYears[index] = value;
-      return newYears;
-    });
+    if (!years.includes(value) || value === years[index]) {
+      setYears((prevYears) => {
+        const newYears = [...prevYears];
+        newYears[index] = value;
+        return newYears;
+      });
+    }
   };
 
   const handleLogout = () => {
     dispatch(logout());
     router.push("/login");
   };
-  // ... existing types and component definition
 
   const handleExportCSV = () => {
     const getColorLabel = (percentage: number) => {
-      // Change from any to number
       if (percentage >= 91) return "dark red";
       if (percentage >= 61) return "red";
       if (percentage >= 31) return "orange";
       return "green";
     };
-
+  
     const data = years.map((year, index) => {
-      const carbonPercentage = (
-        (metrics.carbon[index] / benchmarks.carbon[index]) *
-        100
-      ).toFixed(2);
-      const waterPercentage = (
-        (metrics.water[index] / benchmarks.water[index]) *
-        100
-      ).toFixed(2);
-      const wastePercentage = (
-        (metrics.waste[index] / benchmarks.waste[index]) *
-        100
-      ).toFixed(2);
-
+      const carbonPercentage =
+        benchmarks.carbon[index] > 0
+          ? ((metrics.carbon[index] / benchmarks.carbon[index]) * 100).toFixed(2)
+          : "0.00";
+      const waterPercentage =
+        benchmarks.water[index] > 0
+          ? ((metrics.water[index] / benchmarks.water[index]) * 100).toFixed(2)
+          : "0.00";
+      const wastePercentage =
+        benchmarks.waste[index] > 0
+          ? ((metrics.waste[index] / benchmarks.waste[index]) * 100).toFixed(2)
+          : "0.00";
+  
       return {
         Year: year,
         Carbon: metrics.carbon[index],
         CarbonPercentage: `${carbonPercentage}% (${getColorLabel(
           parseFloat(carbonPercentage)
-        )})`, // Ensure conversion to number
+        )})`,
         Water: metrics.water[index],
         WaterPercentage: `${waterPercentage}% (${getColorLabel(
           parseFloat(waterPercentage)
-        )})`, // Ensure conversion to number
+        )})`,
         Waste: metrics.waste[index],
         WastePercentage: `${wastePercentage}% (${getColorLabel(
           parseFloat(wastePercentage)
-        )})`, // Ensure conversion to number
+        )})`,
       };
     });
+  
+    const averageValue = (values: number[]) =>
+      values.length ? (values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(2) : "0.00";
+  
+    const averages = {
+      Year: "Average",
+      Carbon: averageValue(metrics.carbon),
+      Water: averageValue(metrics.water),
+      Waste: averageValue(metrics.waste),
+    };
+  
+    const csvData = [...data, averages];
+    const csv = Papa.unparse(csvData);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", "sustainability_metrics.csv");
+    document.body.appendChild(link);
+    link.click();
+  };
+  
+
+  const handleExportJSON = () => {
+    const data = years.map((year, index) => ({
+      Year: year,
+      Carbon: metrics.carbon[index],
+      Water: metrics.water[index],
+      Waste: metrics.waste[index],
+    }));
 
     const averages = {
       AverageCarbon: (
@@ -245,31 +274,41 @@ const DashboardPage: React.FC = () => {
       ).toFixed(2),
     };
 
-    const csvData = [...data, { Year: "Average", ...averages }];
-    const csv = Papa.unparse(csvData);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const jsonData = { data, averages };
+    const json = JSON.stringify(jsonData, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.setAttribute("download", "sustainability_metrics.csv");
+    link.setAttribute("download", "sustainability_metrics.json");
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen flex flex-col">
+    <div className="max-w-screen-xl mx-auto px-4 py-8">
       <header className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-orenBlue">
-          Sustainability Dashboard
-        </h1>
-        <button
-          onClick={handleLogout}
-          className="px-4 py-2 bg-red-600 text-white rounded-lg"
-        >
-          Logout
-        </button>
+        <h1 className="text-3xl font-bold text-orenBlue">Sustainability Dashboard</h1>
+        <div className="flex gap-4">
+          <button
+            onClick={handleExportCSV}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+          >
+            Export as CSV
+          </button>
+          <button
+            onClick={handleExportJSON}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg"
+          >
+            Export as JSON
+          </button>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg"
+          >
+            Logout
+          </button>
+        </div>
       </header>
-
       {/* Input Fields for Years and Metrics */}
       <div className="mb-6">
         <h2 className="text-lg font-semibold mb-2">Years</h2>
@@ -290,55 +329,110 @@ const DashboardPage: React.FC = () => {
       {["carbon", "water", "waste"].map((metricType) => (
         <div key={metricType} className="mb-6">
           <h2 className="text-lg font-semibold mb-2">
-            {metricType.charAt(0).toUpperCase() + metricType.slice(1)} Usage
+            {metricType.charAt(0).toUpperCase() + metricType.slice(1)} Metrics
           </h2>
           <div className="grid grid-cols-5 gap-4">
-            {years.map((year, index) => (
+            {metrics[metricType as keyof Metrics].map((value, index) => (
               <input
                 key={`${metricType}-${index}`}
                 type="number"
-                value={metrics[metricType as keyof Metrics][index]}
+                value={value}
                 onChange={(e) =>
-                  handleMetricChange(
-                    metricType as keyof Metrics,
-                    index,
-                    e.target.value
-                  )
+                  handleMetricChange(metricType as keyof Metrics, index, e.target.value)
                 }
-                className={`border px-2 py-1 rounded ${
-                  errors[metricType as keyof Errors][index]
-                    ? "border-red-500"
-                    : "border-gray-300"
+                className={`border px-2 py-1 rounded border-gray-300 ${
+                  errors[metricType as keyof Metrics][index] ? "border-red-500" : ""
                 }`}
-                placeholder={year}
+                placeholder={`${metricType} ${index + 1}`}
               />
             ))}
           </div>
         </div>
       ))}
 
-      {/* Individual Charts for Each Metric */}
-      {["carbon", "water", "waste"].map((metricType) => (
-        <div key={metricType} className="mb-6">
-          <h2 className="text-lg font-semibold mb-2">
-            {metricType.charAt(0).toUpperCase() + metricType.slice(1)} Metrics
-          </h2>
-          <Line data={createIndividualChartData(metricType as keyof Metrics)} />
-        </div>
-      ))}
-
-      {/* Combined Chart */}
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">Combined Metrics</h2>
-        <Line data={createCombinedChartData()} />
+      {/* Line Charts */}
+      <div className="grid grid-cols-2 gap-6 mb-6">
+        {["carbon", "water", "waste"].map((metricType) => (
+          <div key={`${metricType}-chart`} className="bg-white p-4 rounded shadow">
+            <h3 className="text-center font-semibold mb-2">
+              {metricType.charAt(0).toUpperCase() + metricType.slice(1)}
+            </h3>
+            <Line
+              data={createIndividualChartData(metricType as keyof Metrics)}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: {
+                    position: "top",
+                    labels: {
+                      boxWidth: 2,
+                    },
+                  },
+                },
+                scales: {
+                  x: {
+                    title: {
+                      display: true,
+                      text: "Years",
+                      font: {
+                        size: 14,
+                      },
+                    },
+                  },
+                  y: {
+                    title: {
+                      display: true,
+                      text: metricType.charAt(0).toUpperCase() + metricType.slice(1),
+                      font: {
+                        size: 14,
+                      },
+                    },
+                  },
+                },
+              }}
+            />
+          </div>
+        ))}
       </div>
 
-      <button
-        onClick={handleExportCSV}
-        className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg"
-      >
-        Export CSV
-      </button>
+      {/* Combined Chart */}
+      <div className="bg-white p-6 rounded shadow mb-6">
+        <h3 className="text-center font-semibold mb-4">Combined Sustainability Metrics</h3>
+        <Line
+          data={createCombinedChartData()}
+          options={{
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "top",
+                labels: {
+                  boxWidth: 2,
+                },
+              },
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: "Years",
+                  font: {
+                    size: 14,
+                  },
+                },
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: "Metrics",
+                  font: {
+                    size: 14,
+                  },
+                },
+              },
+            },
+          }}
+        />
+      </div>
     </div>
   );
 };

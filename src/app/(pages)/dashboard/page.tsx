@@ -185,7 +185,6 @@ const DashboardPage: React.FC = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user1");
     dispatch(logout());
     router.push("/login");
   };

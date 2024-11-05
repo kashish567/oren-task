@@ -7,6 +7,8 @@ export default function StoreProvider({
 }: {
   children: React.ReactNode;
 }) {
+
+  
   return (
     <Provider store={store}>
       <div className="text-black">{children}</div>

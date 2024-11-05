@@ -36,7 +36,7 @@ const SignupPage = () => {
       return;
     }
 
-    // Simple login logic for demo purposes
+    
     const res = await axios.post('/api/signup', { email, password });
     if (res.data.success) {
       

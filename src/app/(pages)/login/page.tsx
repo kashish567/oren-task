@@ -44,8 +44,7 @@ const LoginPage = () => {
       // Store user identifier in local storage
       
       const user = {
-        email: res.data.email,
-        token: res.data.token,
+        email: res.data.email
       };
       dispatch(login(user));
       router.push("/dashboard");
@@ -55,9 +54,6 @@ const LoginPage = () => {
   };
   
 
-  useEffect(()=>{
-
-  },[])
 
 
 

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { login } from "@/redux/slice/authSlice";
 import axios from "axios";
 import Link from "next/link";
+import { RootState } from "@/redux/store";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -16,32 +17,49 @@ const LoginPage = () => {
 
   // Regex for validating email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  
+  const isAuthenticated = useSelector(
+    (state: RootState) => state.auth.isAuthenticated
+  );
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null); // Clear any previous errors
-
+    setError(null); 
+    
     // Validate email format using regex
     if (!emailRegex.test(email)) {
       setError("Please enter a valid email address.");
       return;
     }
 
-    // Simple login logic for demo purposes
+    // Send POST request to server with email and password
     const res = await axios.post("/api/signin", { email, password });
     if (res.data.success) {
       // Store user identifier in local storage
-      localStorage.setItem("user1", "true");
+      
       const user = {
         email: res.data.email,
+        token: res.data.token,
       };
       dispatch(login(user));
-      // Redirect to dashboard after successful login
       router.push("/dashboard");
     } else {
       setError("Invalid credentials");
     }
   };
+  
+
+  useEffect(()=>{
+
+  },[])
+
+
 
   return (
     <div className="flex items-center justify-center h-screen bg-gray-50">

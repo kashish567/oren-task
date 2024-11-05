@@ -81,9 +81,7 @@ const DashboardPage: React.FC = () => {
     labels: years,
     datasets: [
       {
-        label: `User ${
-          metricType.charAt(0).toUpperCase() + metricType.slice(1)
-        }`,
+        label: `User ${metricType.charAt(0).toUpperCase() + metricType.slice(1)}`,
         data: metrics[metricType],
         borderColor:
           metricType === "carbon"
@@ -91,15 +89,17 @@ const DashboardPage: React.FC = () => {
             : metricType === "water"
             ? "#34D399"
             : "#F472B6",
+        borderWidth: 2,
+        pointRadius: 3,
         fill: false,
       },
       {
-        label: `Benchmark ${
-          metricType.charAt(0).toUpperCase() + metricType.slice(1)
-        }`,
+        label: `Benchmark ${metricType.charAt(0).toUpperCase() + metricType.slice(1)}`,
         data: benchmarks[metricType],
         borderColor: "#FF5733",
         borderDash: [5, 5],
+        borderWidth: 2,
+        pointRadius: 3,
         fill: false,
       },
     ],
@@ -192,56 +192,14 @@ const DashboardPage: React.FC = () => {
   };
 
   const handleExportCSV = () => {
-    const getColorLabel = (percentage: number) => {
-      if (percentage >= 91) return "dark red";
-      if (percentage >= 61) return "red";
-      if (percentage >= 31) return "orange";
-      return "green";
-    };
-  
-    const data = years.map((year, index) => {
-      const carbonPercentage =
-        benchmarks.carbon[index] > 0
-          ? ((metrics.carbon[index] / benchmarks.carbon[index]) * 100).toFixed(2)
-          : "0.00";
-      const waterPercentage =
-        benchmarks.water[index] > 0
-          ? ((metrics.water[index] / benchmarks.water[index]) * 100).toFixed(2)
-          : "0.00";
-      const wastePercentage =
-        benchmarks.waste[index] > 0
-          ? ((metrics.waste[index] / benchmarks.waste[index]) * 100).toFixed(2)
-          : "0.00";
-  
-      return {
-        Year: year,
-        Carbon: metrics.carbon[index],
-        CarbonPercentage: `${carbonPercentage}% (${getColorLabel(
-          parseFloat(carbonPercentage)
-        )})`,
-        Water: metrics.water[index],
-        WaterPercentage: `${waterPercentage}% (${getColorLabel(
-          parseFloat(waterPercentage)
-        )})`,
-        Waste: metrics.waste[index],
-        WastePercentage: `${wastePercentage}% (${getColorLabel(
-          parseFloat(wastePercentage)
-        )})`,
-      };
-    });
-  
-    const averageValue = (values: number[]) =>
-      values.length ? (values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(2) : "0.00";
-  
-    const averages = {
-      Year: "Average",
-      Carbon: averageValue(metrics.carbon),
-      Water: averageValue(metrics.water),
-      Waste: averageValue(metrics.waste),
-    };
-  
-    const csvData = [...data, averages];
-    const csv = Papa.unparse(csvData);
+    const data = years.map((year, index) => ({
+      Year: year,
+      Carbon: metrics.carbon[index],
+      Water: metrics.water[index],
+      Waste: metrics.waste[index],
+    }));
+
+    const csv = Papa.unparse(data);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -249,7 +207,6 @@ const DashboardPage: React.FC = () => {
     document.body.appendChild(link);
     link.click();
   };
-  
 
   const handleExportJSON = () => {
     const data = years.map((year, index) => ({
@@ -259,23 +216,7 @@ const DashboardPage: React.FC = () => {
       Waste: metrics.waste[index],
     }));
 
-    const averages = {
-      AverageCarbon: (
-        metrics.carbon.reduce((sum, value) => sum + value, 0) /
-        metrics.carbon.length
-      ).toFixed(2),
-      AverageWater: (
-        metrics.water.reduce((sum, value) => sum + value, 0) /
-        metrics.water.length
-      ).toFixed(2),
-      AverageWaste: (
-        metrics.waste.reduce((sum, value) => sum + value, 0) /
-        metrics.waste.length
-      ).toFixed(2),
-    };
-
-    const jsonData = { data, averages };
-    const json = JSON.stringify(jsonData, null, 2);
+    const json = JSON.stringify({ data }, null, 2);
     const blob = new Blob([json], { type: "application/json" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -285,9 +226,9 @@ const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-screen-xl mx-auto px-4 py-8">
-      <header className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-orenBlue">Sustainability Dashboard</h1>
+    <div className="max-w-screen-lg mx-auto px-4 py-8">
+      <header className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+        <h1 className="text-2xl md:text-3xl font-bold">Sustainability Dashboard</h1>
         <div className="flex gap-4">
           <button
             onClick={handleExportCSV}
@@ -309,21 +250,18 @@ const DashboardPage: React.FC = () => {
           </button>
         </div>
       </header>
-      {/* Input Fields for Years and Metrics */}
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">Years</h2>
-        <div className="grid grid-cols-5 gap-4">
-          {years.map((year, index) => (
-            <input
-              key={`year-${index}`}
-              type="text"
-              value={year}
-              onChange={(e) => handleYearChange(index, e.target.value)}
-              className="border px-2 py-1 rounded border-gray-300"
-              placeholder={`Year ${index + 1}`}
-            />
-          ))}
-        </div>
+
+      <div className="mb-6 grid grid-cols-2 sm:grid-cols-5 gap-2">
+        {years.map((year, index) => (
+          <input
+            key={`year-${index}`}
+            type="text"
+            value={year}
+            onChange={(e) => handleYearChange(index, e.target.value)}
+            className="border px-2 py-1 rounded text-center border-gray-300"
+            placeholder={`Year ${index + 1}`}
+          />
+        ))}
       </div>
 
       {["carbon", "water", "waste"].map((metricType) => (
@@ -331,7 +269,7 @@ const DashboardPage: React.FC = () => {
           <h2 className="text-lg font-semibold mb-2">
             {metricType.charAt(0).toUpperCase() + metricType.slice(1)} Metrics
           </h2>
-          <div className="grid grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
             {metrics[metricType as keyof Metrics].map((value, index) => (
               <input
                 key={`${metricType}-${index}`}
@@ -340,64 +278,49 @@ const DashboardPage: React.FC = () => {
                 onChange={(e) =>
                   handleMetricChange(metricType as keyof Metrics, index, e.target.value)
                 }
-                className={`border px-2 py-1 rounded border-gray-300 ${
+                className={`border px-2 py-1 rounded text-center border-gray-300 ${
                   errors[metricType as keyof Metrics][index] ? "border-red-500" : ""
                 }`}
-                placeholder={`${metricType} ${index + 1}`}
+                placeholder="Enter value"
               />
             ))}
           </div>
+          <Line
+            data={createIndividualChartData(metricType as keyof Metrics)}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: "top",
+                  labels: {
+                    usePointStyle: true,
+                    pointStyle: "line",
+                  },
+                },
+              },
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: "Years",
+                    font: { size: 14 },
+                  },
+                },
+                y: {
+                  title: {
+                    display: true,
+                    text: "Values",
+                    font: { size: 14 },
+                  },
+                },
+              },
+            }}
+          />
         </div>
       ))}
 
-      {/* Line Charts */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
-        {["carbon", "water", "waste"].map((metricType) => (
-          <div key={`${metricType}-chart`} className="bg-white p-4 rounded shadow">
-            <h3 className="text-center font-semibold mb-2">
-              {metricType.charAt(0).toUpperCase() + metricType.slice(1)}
-            </h3>
-            <Line
-              data={createIndividualChartData(metricType as keyof Metrics)}
-              options={{
-                responsive: true,
-                plugins: {
-                  legend: {
-                    position: "top",
-                    labels: {
-                      boxWidth: 2,
-                    },
-                  },
-                },
-                scales: {
-                  x: {
-                    title: {
-                      display: true,
-                      text: "Years",
-                      font: {
-                        size: 14,
-                      },
-                    },
-                  },
-                  y: {
-                    title: {
-                      display: true,
-                      text: metricType.charAt(0).toUpperCase() + metricType.slice(1),
-                      font: {
-                        size: 14,
-                      },
-                    },
-                  },
-                },
-              }}
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* Combined Chart */}
-      <div className="bg-white p-6 rounded shadow mb-6">
-        <h3 className="text-center font-semibold mb-4">Combined Sustainability Metrics</h3>
+      <div className="bg-white p-4 rounded shadow mb-6">
+        <h3 className="text-center font-semibold mb-2">Combined Metrics</h3>
         <Line
           data={createCombinedChartData()}
           options={{
@@ -406,28 +329,17 @@ const DashboardPage: React.FC = () => {
               legend: {
                 position: "top",
                 labels: {
-                  boxWidth: 2,
+                  usePointStyle: true,
+                  pointStyle: "line",
                 },
               },
             },
             scales: {
               x: {
-                title: {
-                  display: true,
-                  text: "Years",
-                  font: {
-                    size: 14,
-                  },
-                },
+                title: { display: true, text: "Years", font: { size: 14 } },
               },
               y: {
-                title: {
-                  display: true,
-                  text: "Metrics",
-                  font: {
-                    size: 14,
-                  },
-                },
+                title: { display: true, text: "Values", font: { size: 14 } },
               },
             },
           }}

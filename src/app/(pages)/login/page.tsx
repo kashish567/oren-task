@@ -1,6 +1,6 @@
 "use client";
 
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { login } from "@/redux/slice/authSlice";
@@ -17,7 +17,7 @@ const LoginPage = () => {
 
   // Regex for validating email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  
+
   const isAuthenticated = useSelector(
     (state: RootState) => state.auth.isAuthenticated
   );
@@ -30,32 +30,42 @@ const LoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null); 
-    
+    setError(null);
+
     // Validate email format using regex
     if (!emailRegex.test(email)) {
       setError("Please enter a valid email address.");
       return;
     }
 
-    // Send POST request to server with email and password
-    const res = await axios.post("/api/signin", { email, password });
-    if (res.data.success) {
-      // Store user identifier in local storage
-      
-      const user = {
-        email: res.data.email
-      };
-      dispatch(login(user));
-      router.push("/dashboard");
-    } else {
-      setError("Invalid credentials");
+    try {
+      // Send POST request to server with email and password
+      const res = await axios.post("/api/signin", { email, password });
+
+      if (res.data.success) {
+        // Store user identifier in local storage
+        const user = {
+          email: res.data.email,
+        };
+
+        dispatch(login(user));
+        router.push("/dashboard");
+      } else {
+        setError("Invalid credentials");
+      }
+    } catch (error) {
+      // Check if the error is an Axios error and display a message
+      if (axios.isAxiosError(error)) {
+        if (error.response && error.response.status === 400) {
+          setError("Invalid credentials"); // Display "Invalid credentials" for a 400 error
+        } else {
+          setError(error.response?.data.message || "An error occurred. Please try again.");
+        }
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
     }
   };
-  
-
-
-
 
   return (
     <div className="flex items-center justify-center h-screen bg-gray-50">

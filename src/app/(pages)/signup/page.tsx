@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import axios from 'axios';
-import Link from 'next/link';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/redux/store';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import Link from "next/link";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 const SignupPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -32,18 +32,32 @@ const SignupPage = () => {
 
     // Validate email format using regex
     if (!emailRegex.test(email)) {
-      setError('Please enter a valid email address.');
+      setError("Please enter a valid email address.");
       return;
     }
 
-    
-    const res = await axios.post('/api/signup', { email, password });
-    if (res.data.success) {
-      
-      // Redirect to dashboard after successful login
-      router.push('/dashboard');
-    } else {
-      setError('Invalid credentials');
+    try {
+      // Send POST request to server with email and password
+      const res = await axios.post("/api/signup", { email, password });
+
+      if (res.data.success) {
+        // Redirect to dashboard after successful signup
+        router.push("/dashboard");
+      } else {
+        setError("Invalid credentials");
+      }
+    } catch (error) {
+      // Check if the error is an Axios error and handle a 400 response for duplicate email
+      if (axios.isAxiosError(error) && error.response) {
+        if (error.response.status === 400) {
+          setError("Email already exists"); // Display "Email already exists" for a 400 error
+        } else {
+          setError(error.response.data.message || "An error occurred. Please try again.");
+        }
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
+      console.error(error);
     }
   };
 
@@ -75,7 +89,7 @@ const SignupPage = () => {
           Signup
         </button>
         <p className="mt-4 text-center">
-          Already have an account?{' '}
+          Already have an account?{" "}
           <Link href="/login" className="text-orenBlue hover:underline">
             Login
           </Link>

@@ -19,9 +19,10 @@ export const POST = async (req: NextRequest) => {
 
     const user = await User.findOne({ email });
 
+    // console.log(user);
     if (!user) {
       return NextResponse.json(
-        { error: "User does not exist" },
+        { error: "User does not exist", success: false },
         { status: 400 }
       );
     }
@@ -29,8 +30,9 @@ export const POST = async (req: NextRequest) => {
     const comparePassword = await bcrypt.compare(password, user.password);
 
     if (!comparePassword) {
+      console.log("error hu me");
       return NextResponse.json(
-        { error: "Invalid credentials" },
+        { error: "Invalid credentials", success: false },
         { status: 400 }
       );
     }

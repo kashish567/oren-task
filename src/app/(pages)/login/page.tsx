@@ -1,10 +1,10 @@
-"use client";
-
+"use client"
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { login } from "@/redux/slice/authSlice";
-import axios from "axios";
+import axiosInstance from "@/utils/axiosInstance";
+import { isAxiosError } from "axios"; // Import isAxiosError directly
 import Link from "next/link";
 import { RootState } from "@/redux/store";
 
@@ -15,7 +15,6 @@ const LoginPage = () => {
   const router = useRouter();
   const dispatch = useDispatch();
 
-  // Regex for validating email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   const isAuthenticated = useSelector(
@@ -32,32 +31,30 @@ const LoginPage = () => {
     e.preventDefault();
     setError(null);
 
-    // Validate email format using regex
     if (!emailRegex.test(email)) {
       setError("Please enter a valid email address.");
       return;
     }
 
     try {
-      // Send POST request to server with email and password
-      const res = await axios.post("/api/signin", { email, password });
+      const res = await axiosInstance.post("/api/signin", { email, password });
 
       if (res.data.success) {
-        // Store user identifier in local storage
-        const user = {
-          email: res.data.email,
-        };
+        const { accessToken, refreshToken, email } = res.data;
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("refreshToken", refreshToken);
 
+        const user = { email };
         dispatch(login(user));
+
         router.push("/dashboard");
       } else {
         setError("Invalid credentials");
       }
     } catch (error) {
-      // Check if the error is an Axios error and display a message
-      if (axios.isAxiosError(error)) {
+      if (isAxiosError(error)) {
         if (error.response && error.response.status === 400) {
-          setError("Invalid credentials"); // Display "Invalid credentials" for a 400 error
+          setError("Invalid credentials");
         } else {
           setError(error.response?.data.message || "An error occurred. Please try again.");
         }

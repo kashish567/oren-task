@@ -1,8 +1,9 @@
-"use client";
+'use client'
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import axiosInstance from "@/utils/axiosInstance";
+import { isAxiosError } from "axios"; // Import isAxiosError directly
 import Link from "next/link";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
@@ -13,7 +14,6 @@ const SignupPage = () => {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Regex for validating email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   const isAuthenticated = useSelector(
@@ -28,29 +28,25 @@ const SignupPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null); // Clear any previous errors
+    setError(null);
 
-    // Validate email format using regex
     if (!emailRegex.test(email)) {
       setError("Please enter a valid email address.");
       return;
     }
 
     try {
-      // Send POST request to server with email and password
-      const res = await axios.post("/api/signup", { email, password });
+      const res = await axiosInstance.post("/api/signup", { email, password });
 
       if (res.data.success) {
-        // Redirect to dashboard after successful signup
         router.push("/dashboard");
       } else {
         setError("Invalid credentials");
       }
     } catch (error) {
-      // Check if the error is an Axios error and handle a 400 response for duplicate email
-      if (axios.isAxiosError(error) && error.response) {
+      if (isAxiosError(error) && error.response) {
         if (error.response.status === 400) {
-          setError("Email already exists"); // Display "Email already exists" for a 400 error
+          setError("Email already exists");
         } else {
           setError(error.response.data.message || "An error occurred. Please try again.");
         }
@@ -88,6 +84,7 @@ const SignupPage = () => {
         >
           Signup
         </button>
+
         <p className="mt-4 text-center">
           Already have an account?{" "}
           <Link href="/login" className="text-orenBlue hover:underline">

@@ -81,9 +81,7 @@ const DashboardPage: React.FC = () => {
     labels: years,
     datasets: [
       {
-        label: `User ${
-          metricType.charAt(0).toUpperCase() + metricType.slice(1)
-        }`,
+        label: `User ${metricType.charAt(0).toUpperCase() + metricType.slice(1)}`,
         data: metrics[metricType],
         borderColor:
           metricType === "carbon"
@@ -91,15 +89,17 @@ const DashboardPage: React.FC = () => {
             : metricType === "water"
             ? "#34D399"
             : "#F472B6",
+        borderWidth: 2,
+        pointRadius: 3,
         fill: false,
       },
       {
-        label: `Benchmark ${
-          metricType.charAt(0).toUpperCase() + metricType.slice(1)
-        }`,
+        label: `Benchmark ${metricType.charAt(0).toUpperCase() + metricType.slice(1)}`,
         data: benchmarks[metricType],
         borderColor: "#FF5733",
         borderDash: [5, 5],
+        borderWidth: 2,
+        pointRadius: 3,
         fill: false,
       },
     ],
@@ -177,168 +177,174 @@ const DashboardPage: React.FC = () => {
   };
 
   const handleYearChange = (index: number, value: string) => {
-    setYears((prevYears) => {
-      const newYears = [...prevYears];
-      newYears[index] = value;
-      return newYears;
-    });
+    if (!years.includes(value) || value === years[index]) {
+      setYears((prevYears) => {
+        const newYears = [...prevYears];
+        newYears[index] = value;
+        return newYears;
+      });
+    }
   };
 
   const handleLogout = () => {
     dispatch(logout());
     router.push("/login");
   };
-  // ... existing types and component definition
 
   const handleExportCSV = () => {
-    const getColorLabel = (percentage: number) => {
-      // Change from any to number
-      if (percentage >= 91) return "dark red";
-      if (percentage >= 61) return "red";
-      if (percentage >= 31) return "orange";
-      return "green";
-    };
+    const data = years.map((year, index) => ({
+      Year: year,
+      Carbon: metrics.carbon[index],
+      Water: metrics.water[index],
+      Waste: metrics.waste[index],
+    }));
 
-    const data = years.map((year, index) => {
-      const carbonPercentage = (
-        (metrics.carbon[index] / benchmarks.carbon[index]) *
-        100
-      ).toFixed(2);
-      const waterPercentage = (
-        (metrics.water[index] / benchmarks.water[index]) *
-        100
-      ).toFixed(2);
-      const wastePercentage = (
-        (metrics.waste[index] / benchmarks.waste[index]) *
-        100
-      ).toFixed(2);
-
-      return {
-        Year: year,
-        Carbon: metrics.carbon[index],
-        CarbonPercentage: `${carbonPercentage}% (${getColorLabel(
-          parseFloat(carbonPercentage)
-        )})`, // Ensure conversion to number
-        Water: metrics.water[index],
-        WaterPercentage: `${waterPercentage}% (${getColorLabel(
-          parseFloat(waterPercentage)
-        )})`, // Ensure conversion to number
-        Waste: metrics.waste[index],
-        WastePercentage: `${wastePercentage}% (${getColorLabel(
-          parseFloat(wastePercentage)
-        )})`, // Ensure conversion to number
-      };
-    });
-
-    const averages = {
-      AverageCarbon: (
-        metrics.carbon.reduce((sum, value) => sum + value, 0) /
-        metrics.carbon.length
-      ).toFixed(2),
-      AverageWater: (
-        metrics.water.reduce((sum, value) => sum + value, 0) /
-        metrics.water.length
-      ).toFixed(2),
-      AverageWaste: (
-        metrics.waste.reduce((sum, value) => sum + value, 0) /
-        metrics.waste.length
-      ).toFixed(2),
-    };
-
-    const csvData = [...data, { Year: "Average", ...averages }];
-    const csv = Papa.unparse(csvData);
+    const csv = Papa.unparse(data);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.setAttribute("download", "sustainability_metrics.csv");
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+  };
+
+  const handleExportJSON = () => {
+    const data = years.map((year, index) => ({
+      Year: year,
+      Carbon: metrics.carbon[index],
+      Water: metrics.water[index],
+      Waste: metrics.waste[index],
+    }));
+
+    const json = JSON.stringify({ data }, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", "sustainability_metrics.json");
+    document.body.appendChild(link);
+    link.click();
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen flex flex-col">
-      <header className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-orenBlue">
-          Sustainability Dashboard
-        </h1>
-        <button
-          onClick={handleLogout}
-          className="px-4 py-2 bg-red-600 text-white rounded-lg"
-        >
-          Logout
-        </button>
+    <div className="max-w-screen-lg mx-auto px-4 py-8">
+      <header className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+        <h1 className="text-2xl md:text-3xl font-bold">Sustainability Dashboard</h1>
+        <div className="flex gap-4">
+          <button
+            onClick={handleExportCSV}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+          >
+            Export as CSV
+          </button>
+          <button
+            onClick={handleExportJSON}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg"
+          >
+            Export as JSON
+          </button>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg"
+          >
+            Logout
+          </button>
+        </div>
       </header>
 
-      {/* Input Fields for Years and Metrics */}
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">Years</h2>
-        <div className="grid grid-cols-5 gap-4">
-          {years.map((year, index) => (
-            <input
-              key={`year-${index}`}
-              type="text"
-              value={year}
-              onChange={(e) => handleYearChange(index, e.target.value)}
-              className="border px-2 py-1 rounded border-gray-300"
-              placeholder={`Year ${index + 1}`}
-            />
-          ))}
-        </div>
+      <div className="mb-6 grid grid-cols-2 sm:grid-cols-5 gap-2">
+        {years.map((year, index) => (
+          <input
+            key={`year-${index}`}
+            type="text"
+            value={year}
+            onChange={(e) => handleYearChange(index, e.target.value)}
+            className="border px-2 py-1 rounded text-center border-gray-300"
+            placeholder={`Year ${index + 1}`}
+          />
+        ))}
       </div>
 
-      {["carbon", "water", "waste"].map((metricType) => (
-        <div key={metricType} className="mb-6">
-          <h2 className="text-lg font-semibold mb-2">
-            {metricType.charAt(0).toUpperCase() + metricType.slice(1)} Usage
-          </h2>
-          <div className="grid grid-cols-5 gap-4">
-            {years.map((year, index) => (
-              <input
-                key={`${metricType}-${index}`}
-                type="number"
-                value={metrics[metricType as keyof Metrics][index]}
-                onChange={(e) =>
-                  handleMetricChange(
-                    metricType as keyof Metrics,
-                    index,
-                    e.target.value
-                  )
-                }
-                className={`border px-2 py-1 rounded ${
-                  errors[metricType as keyof Errors][index]
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
-                placeholder={year}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
-
-      {/* Individual Charts for Each Metric */}
       {["carbon", "water", "waste"].map((metricType) => (
         <div key={metricType} className="mb-6">
           <h2 className="text-lg font-semibold mb-2">
             {metricType.charAt(0).toUpperCase() + metricType.slice(1)} Metrics
           </h2>
-          <Line data={createIndividualChartData(metricType as keyof Metrics)} />
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            {metrics[metricType as keyof Metrics].map((value, index) => (
+              <input
+                key={`${metricType}-${index}`}
+                type="number"
+                value={value}
+                onChange={(e) =>
+                  handleMetricChange(metricType as keyof Metrics, index, e.target.value)
+                }
+                className={`border px-2 py-1 rounded text-center border-gray-300 ${
+                  errors[metricType as keyof Metrics][index] ? "border-red-500" : ""
+                }`}
+                placeholder="Enter value"
+              />
+            ))}
+          </div>
+          <Line
+            data={createIndividualChartData(metricType as keyof Metrics)}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: "top",
+                  labels: {
+                    usePointStyle: true,
+                    pointStyle: "line",
+                  },
+                },
+              },
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: "Years",
+                    font: { size: 14 },
+                  },
+                },
+                y: {
+                  title: {
+                    display: true,
+                    text: "Values",
+                    font: { size: 14 },
+                  },
+                },
+              },
+            }}
+          />
         </div>
       ))}
 
-      {/* Combined Chart */}
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">Combined Metrics</h2>
-        <Line data={createCombinedChartData()} />
+      <div className="bg-white p-4 rounded shadow mb-6">
+        <h3 className="text-center font-semibold mb-2">Combined Metrics</h3>
+        <Line
+          data={createCombinedChartData()}
+          options={{
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "top",
+                labels: {
+                  usePointStyle: true,
+                  pointStyle: "line",
+                },
+              },
+            },
+            scales: {
+              x: {
+                title: { display: true, text: "Years", font: { size: 14 } },
+              },
+              y: {
+                title: { display: true, text: "Values", font: { size: 14 } },
+              },
+            },
+          }}
+        />
       </div>
-
-      <button
-        onClick={handleExportCSV}
-        className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg"
-      >
-        Export CSV
-      </button>
     </div>
   );
 };

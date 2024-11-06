@@ -1,15 +1,14 @@
-import connectDB from "@/db/db";
-import User from "@/models/user.model";
+import prisma from "@/lib/prisma"; // Ensure prisma client is imported correctly
 import { NextResponse, NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
 export const POST = async (req: NextRequest) => {
-  connectDB();
   try {
     const body = await req.json();
     const { email, password } = body;
 
+    // Validate input fields
     if (!email || !password) {
       return NextResponse.json(
         { error: "Please fill all fields" },
@@ -17,9 +16,11 @@ export const POST = async (req: NextRequest) => {
       );
     }
 
-    const user = await User.findOne({ email });
+    // Find the user with the given email
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
 
-    // console.log(user);
     if (!user) {
       return NextResponse.json(
         { error: "User does not exist", success: false },
@@ -27,16 +28,17 @@ export const POST = async (req: NextRequest) => {
       );
     }
 
+    // Compare passwords
     const comparePassword = await bcrypt.compare(password, user.password);
 
     if (!comparePassword) {
-      console.log("error hu me");
       return NextResponse.json(
         { error: "Invalid credentials", success: false },
         { status: 400 }
       );
     }
 
+    // Generate JWT token
     const token = jwt.sign({ email: user.email }, process.env.JWT_SECRET!, {
       expiresIn: "1h",
     });

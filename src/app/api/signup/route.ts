@@ -1,14 +1,13 @@
-import connectDB from "@/db/db";
-import User from "@/models/user.model";
+import prisma from "@/lib/prisma"; 
 import { NextResponse, NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 
 export const POST = async (req: NextRequest) => {
-  connectDB();
   try {
     const body = await req.json();
     const { email, password } = body;
 
+    // Validate input
     if (!email || !password) {
       return NextResponse.json(
         { error: "Please fill all fields" },
@@ -16,7 +15,10 @@ export const POST = async (req: NextRequest) => {
       );
     }
 
-    const existingUser = await User.findOne({ email });
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
 
     if (existingUser) {
       return NextResponse.json(
@@ -25,9 +27,13 @@ export const POST = async (req: NextRequest) => {
       );
     }
 
+    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const user = await User.create({ email, password: hashedPassword });
+    // Create new user
+    const user = await prisma.user.create({
+      data: { email, password: hashedPassword },
+    });
 
     return NextResponse.json(
       { email: user.email, success: true },

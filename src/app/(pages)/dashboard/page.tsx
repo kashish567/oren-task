@@ -262,84 +262,79 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  return (
-    <div className="max-w-screen-lg mx-auto px-4 py-8">
-      <header className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-        <h1 className="text-2xl md:text-3xl font-bold">
-          Sustainability Dashboard
-        </h1>
-        <div className="flex gap-4">
-          <button
-            onClick={handleExportCSV}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg"
-          >
-            Export as CSV
-          </button>
-          <button
-            onClick={handleExportJSON}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg"
-          >
-            Export as JSON
-          </button>
-          <button
+  // Wrap each chart in a responsive container and update container styles for mobile
+return (
+  <div className="max-w-screen-lg mx-auto px-2 sm:px-4 py-8">
+    <header className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+      <h1 className="text-2xl md:text-3xl font-bold">Sustainability Dashboard</h1>
+      <div className="flex gap-4">
+        <button
+          onClick={handleExportCSV}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+        >
+          Export as CSV
+        </button>
+        <button
+          onClick={handleExportJSON}
+          className="px-4 py-2 bg-green-600 text-white rounded-lg"
+        >
+          Export as JSON
+        </button>
+        <button
             onClick={handleSaveData}
             className="px-4 py-2 bg-red-600 text-white rounded-lg"
           >
             Save Metrics
           </button>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
-
-      <div className="mb-6 grid grid-cols-2 sm:grid-cols-5 gap-2">
-        {years.map((year, index) => (
-          <input
-            key={`year-${index}`}
-            type="text"
-            value={year}
-            onChange={(e) => handleYearChange(index, e.target.value)}
-            className="border px-2 py-1 rounded text-center border-gray-300"
-            placeholder={`Year ${index + 1}`}
-          />
-        ))}
+        <button
+          onClick={handleLogout}
+          className="px-4 py-2 bg-red-600 text-white rounded-lg"
+        >
+          Logout
+        </button>
       </div>
+    </header>
 
-      {["carbon", "water", "waste"].map((metricType) => (
-        <div key={metricType} className="mb-6">
-          <h2 className="text-lg font-semibold mb-2">
-            {metricType.charAt(0).toUpperCase() + metricType.slice(1)} Metrics
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-            {metrics[metricType as keyof Metrics].map((value, index) => (
-              <input
-                key={`${metricType}-${index}`}
-                type="number"
-                value={value}
-                onChange={(e) =>
-                  handleMetricChange(
-                    metricType as keyof Metrics,
-                    index,
-                    e.target.value
-                  )
-                }
-                className={`border px-2 py-1 rounded text-center border-gray-300 ${
-                  errors[metricType as keyof Metrics][index]
-                    ? "border-red-500"
-                    : ""
-                }`}
-                placeholder="Enter value"
-              />
-            ))}
-          </div>
+    <div className="mb-6 grid grid-cols-2 sm:grid-cols-5 gap-2">
+      {years.map((year, index) => (
+        <input
+          key={`year-${index}`}
+          type="text"
+          value={year}
+          onChange={(e) => handleYearChange(index, e.target.value)}
+          className="border px-2 py-1 rounded text-center border-gray-300"
+          placeholder={`Year ${index + 1}`}
+        />
+      ))}
+    </div>
+
+    {["carbon", "water", "waste"].map((metricType) => (
+      <div key={metricType} className="mb-6">
+        <h2 className="text-lg font-semibold mb-2">
+          {metricType.charAt(0).toUpperCase() + metricType.slice(1)} Metrics
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+          {metrics[metricType as keyof Metrics].map((value, index) => (
+            <input
+              key={`${metricType}-${index}`}
+              type="number"
+              value={value}
+              onChange={(e) =>
+                handleMetricChange(metricType as keyof Metrics, index, e.target.value)
+              }
+              className={`border px-2 py-1 rounded text-center border-gray-300 ${
+                errors[metricType as keyof Metrics][index] ? "border-red-500" : ""
+              }`}
+              placeholder="Enter value"
+            />
+          ))}
+        </div>
+        <div className="relative w-full h-64 sm:h-80 md:h-96">
           <Line
             data={createIndividualChartData(metricType as keyof Metrics)}
             options={{
               responsive: true,
+              maintainAspectRatio: false, // Ensures the chart adapts to container height
               plugins: {
                 legend: {
                   position: "top",
@@ -368,14 +363,17 @@ const DashboardPage: React.FC = () => {
             }}
           />
         </div>
-      ))}
+      </div>
+    ))}
 
-      <div className="bg-white p-4 rounded shadow mb-6">
-        <h3 className="text-center font-semibold mb-2">Combined Metrics</h3>
+    <div className="bg-white p-4 rounded shadow mb-6">
+      <h3 className="text-center font-semibold mb-2">Combined Metrics</h3>
+      <div className="relative w-full h-64 sm:h-80 md:h-96">
         <Line
           data={createCombinedChartData()}
           options={{
             responsive: true,
+            maintainAspectRatio: false, // Ensures chart adapts to container height
             plugins: {
               legend: {
                 position: "top",
@@ -397,7 +395,8 @@ const DashboardPage: React.FC = () => {
         />
       </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default DashboardPage;

@@ -1,12 +1,11 @@
 "use client"
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { login } from "@/redux/slice/authSlice";
 import axiosInstance from "@/utils/axiosInstance";
 import { isAxiosError } from "axios"; // Import isAxiosError directly
 import Link from "next/link";
-import { RootState } from "@/redux/store";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -16,16 +15,6 @@ const LoginPage = () => {
   const dispatch = useDispatch();
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  const isAuthenticated = useSelector(
-    (state: RootState) => state.auth.isAuthenticated
-  );
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/dashboard");
-    }
-  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,9 +29,8 @@ const LoginPage = () => {
       const res = await axiosInstance.post("/api/signin", { email, password });
 
       if (res.data.success) {
-        const { accessToken, refreshToken, email } = res.data;
+        const { accessToken, email } = res.data;
         localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("refreshToken", refreshToken);
 
         const user = { email };
         dispatch(login(user));

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Line } from "react-chartjs-2";
 import { useRouter } from "next/navigation";
 import Papa from "papaparse";
@@ -13,9 +13,10 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { logout } from "@/redux/slice/authSlice";
-import { RootState } from "@/redux/store";
+
+import axios from "axios";
 
 ChartJS.register(
   CategoryScale,
@@ -67,21 +68,14 @@ const DashboardPage: React.FC = () => {
   };
 
   const dispatch = useDispatch();
-  const isAuthenticated = useSelector(
-    (state: RootState) => state.auth.isAuthenticated
-  );
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/login");
-    }
-  }, [isAuthenticated, router]);
 
   const createIndividualChartData = (metricType: keyof Metrics) => ({
     labels: years,
     datasets: [
       {
-        label: `User ${metricType.charAt(0).toUpperCase() + metricType.slice(1)}`,
+        label: `User ${
+          metricType.charAt(0).toUpperCase() + metricType.slice(1)
+        }`,
         data: metrics[metricType],
         borderColor:
           metricType === "carbon"
@@ -94,7 +88,9 @@ const DashboardPage: React.FC = () => {
         fill: false,
       },
       {
-        label: `Benchmark ${metricType.charAt(0).toUpperCase() + metricType.slice(1)}`,
+        label: `Benchmark ${
+          metricType.charAt(0).toUpperCase() + metricType.slice(1)
+        }`,
         data: benchmarks[metricType],
         borderColor: "#FF5733",
         borderDash: [5, 5],
@@ -186,9 +182,20 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
-    dispatch(logout());
-    router.push("/login");
+  const handleLogout = async () => {
+  
+    try {
+      // Call server-side logout API to clear the refresh token
+      await axios.post("/api/logout");
+      
+      // Dispatch logout action to update Redux state
+      dispatch(logout());
+  
+      // Redirect to the login page
+      router.push("/");
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
   };
 
   const handleExportCSV = () => {
@@ -225,10 +232,42 @@ const DashboardPage: React.FC = () => {
     link.click();
   };
 
+  const handleSaveData = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      return;
+    }
+
+    for (let i = 0; i < years.length; i++) {
+      const year = years[i];
+      const carbon = metrics.carbon[i];
+      const water = metrics.water[i];
+      const waste = metrics.waste[i];
+
+      try {
+        const res = await axios.post(
+          "/api/metrix",
+          { carbon, water, waste, year },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        console.log(res.data);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  };
+
   return (
     <div className="max-w-screen-lg mx-auto px-4 py-8">
       <header className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-        <h1 className="text-2xl md:text-3xl font-bold">Sustainability Dashboard</h1>
+        <h1 className="text-2xl md:text-3xl font-bold">
+          Sustainability Dashboard
+        </h1>
         <div className="flex gap-4">
           <button
             onClick={handleExportCSV}
@@ -241,6 +280,12 @@ const DashboardPage: React.FC = () => {
             className="px-4 py-2 bg-green-600 text-white rounded-lg"
           >
             Export as JSON
+          </button>
+          <button
+            onClick={handleSaveData}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg"
+          >
+            Save Metrics
           </button>
           <button
             onClick={handleLogout}
@@ -276,10 +321,16 @@ const DashboardPage: React.FC = () => {
                 type="number"
                 value={value}
                 onChange={(e) =>
-                  handleMetricChange(metricType as keyof Metrics, index, e.target.value)
+                  handleMetricChange(
+                    metricType as keyof Metrics,
+                    index,
+                    e.target.value
+                  )
                 }
                 className={`border px-2 py-1 rounded text-center border-gray-300 ${
-                  errors[metricType as keyof Metrics][index] ? "border-red-500" : ""
+                  errors[metricType as keyof Metrics][index]
+                    ? "border-red-500"
+                    : ""
                 }`}
                 placeholder="Enter value"
               />

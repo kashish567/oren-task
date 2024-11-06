@@ -40,6 +40,6 @@ export const POST = async (req: NextRequest) => {
 
     return NextResponse.json({ accessToken, refreshToken, success: true }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: "An error occurred" }, { status: 500 });
+    return NextResponse.json({ error:error }, { status: 500 });
   }
 };

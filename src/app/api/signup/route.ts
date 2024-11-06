@@ -28,8 +28,7 @@ export const POST = async (req: NextRequest) => {
     });
 
     return NextResponse.json({ email: user.email, success: true }, { status: 201 });
-  } catch (error:any) {
-    console.log(error.message)
-    return NextResponse.json({ error: "An unexpected error occurred"}, { status: 500 });
+  } catch (error) {
+    return NextResponse.json({ error: `${error}`}, { status: 500 });
   }
 };

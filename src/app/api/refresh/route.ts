@@ -24,6 +24,6 @@ export const POST = async (req: NextRequest) => {
 
     return NextResponse.json({ accessToken: newAccessToken }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: "Token verification failed" }, { status: 401 });
+    return NextResponse.json({ error:error }, { status: 401 });
   }
 };

@@ -266,30 +266,31 @@ const DashboardPage: React.FC = () => {
           Sustainability Dashboard
         </h1>
         <div className="flex gap-4">
-          <button
-            onClick={handleExportCSV}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg"
-          >
-            Export as CSV
-          </button>
-          <button
-            onClick={handleExportJSON}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg"
-          >
-            Export as JSON
-          </button>
-          <button
-            onClick={handleSaveData}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg"
-          >
-            Save Metrics
-          </button>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg"
-          >
-            Logout
-          </button>
+        <button
+  onClick={handleExportCSV}
+  className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs sm:px-4 sm:py-2 sm:text-sm"
+>
+  Export as .csv
+</button>
+<button
+  onClick={handleExportJSON}
+  className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs sm:px-4 sm:py-2 sm:text-sm"
+>
+  Export as .json
+</button>
+<button
+  onClick={handleSaveData}
+  className="px-3 py-1.5 bg-orange-600 text-white rounded-lg text-xs sm:px-4 sm:py-2 sm:text-sm"
+>
+  Save Metrics
+</button>
+<button
+  onClick={handleLogout}
+  className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs sm:px-4 sm:py-2 sm:text-sm"
+>
+  Logout
+</button>
+
         </div>
       </header>
 

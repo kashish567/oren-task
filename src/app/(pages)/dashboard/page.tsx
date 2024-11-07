@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Line } from "react-chartjs-2";
 import { useRouter } from "next/navigation";
 import Papa from "papaparse";
@@ -15,7 +15,6 @@ import {
 } from "chart.js";
 import { useDispatch } from "react-redux";
 import { logout } from "@/redux/slice/authSlice";
-
 import axios from "axios";
 
 ChartJS.register(
@@ -61,11 +60,20 @@ const DashboardPage: React.FC = () => {
     waste: [false, false, false, false, false],
   });
 
-  const benchmarks: Metrics = {
-    carbon: [50, 45, 40, 35, 30],
-    water: [200, 180, 160, 140, 120],
-    waste: [100, 90, 80, 70, 60],
-  };
+  const [benchmarks, setBenchmarks] = useState<Metrics>({
+    carbon: [],
+    water: [],
+    waste: [],
+  });
+
+  useEffect(() => {
+    const loadBenchmarks = async () => {
+      const response = await fetch("/constant.json");
+      const data = await response.json();
+      setBenchmarks(data);
+    };
+    loadBenchmarks();
+  }, []);
 
   const dispatch = useDispatch();
 
@@ -183,15 +191,9 @@ const DashboardPage: React.FC = () => {
   };
 
   const handleLogout = async () => {
-  
     try {
-      // Call server-side logout API to clear the refresh token
       await axios.post("/api/logout");
-      
-      // Dispatch logout action to update Redux state
       dispatch(logout());
-  
-      // Redirect to the login page
       router.push("/");
     } catch (error) {
       console.error("Logout failed", error);
@@ -234,9 +236,7 @@ const DashboardPage: React.FC = () => {
 
   const handleSaveData = async () => {
     const token = localStorage.getItem("accessToken");
-    if (!token) {
-      return;
-    }
+    if (!token) return;
 
     for (let i = 0; i < years.length; i++) {
       const year = years[i];
@@ -248,11 +248,7 @@ const DashboardPage: React.FC = () => {
         const res = await axios.post(
           "/api/metrix",
           { carbon, water, waste, year },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
         console.log(res.data);
@@ -299,103 +295,99 @@ const DashboardPage: React.FC = () => {
       <div className="mb-6 grid grid-cols-2 sm:grid-cols-5 gap-2">
         {years.map((year, index) => (
           <input
-            key={`year-${index}`}
+            key={index}
             type="text"
             value={year}
             onChange={(e) => handleYearChange(index, e.target.value)}
-            className="border px-2 py-1 rounded text-center border-gray-300"
-            placeholder={`Year ${index + 1}`}
+            className="border p-1 rounded text-center"
           />
         ))}
       </div>
 
-      {["carbon", "water", "waste"].map((metricType) => (
-        <div key={metricType} className="mb-6">
-          <h2 className="text-lg font-semibold mb-2">
-            {metricType.charAt(0).toUpperCase() + metricType.slice(1)} Metrics
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-            {metrics[metricType as keyof Metrics].map((value, index) => (
-              <input
-                key={`${metricType}-${index}`}
-                type="number"
-                value={value}
-                onChange={(e) =>
-                  handleMetricChange(
-                    metricType as keyof Metrics,
-                    index,
-                    e.target.value
-                  )
-                }
-                className={`border px-2 py-1 rounded text-center border-gray-300 ${
-                  errors[metricType as keyof Metrics][index]
-                    ? "border-red-500"
-                    : ""
-                }`}
-                placeholder="Enter value"
-              />
-            ))}
+      <div className="space-y-8">
+        {["carbon", "water", "waste"].map((metric) => (
+          <div key={metric}>
+            <h2 className="text-xl font-semibold mb-4">
+              {metric.charAt(0).toUpperCase() + metric.slice(1)} Metrics
+            </h2>
+            <div className="mb-4 grid grid-cols-5 gap-2">
+              {metrics[metric as keyof Metrics].map((value, index) => (
+                <input
+                  key={index}
+                  type="number"
+                  value={value}
+                  onChange={(e) =>
+                    handleMetricChange(
+                      metric as keyof Metrics,
+                      index,
+                      e.target.value
+                    )
+                  }
+                  className={`border p-1 rounded text-center ${
+                    errors[metric as keyof Metrics][index]
+                      ? "border-red-500"
+                      : ""
+                  }`}
+                />
+              ))}
+            </div>
+            <Line
+              data={createIndividualChartData(metric as keyof Metrics)}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: {
+                    position: "top",
+                    labels: {
+                      usePointStyle: true,
+                      pointStyle: "line", // Show lines instead of rectangles
+                      boxWidth: 50,
+                    },
+                  },
+                  title: {
+                    display: true,
+                    text: `${
+                      metric.charAt(0).toUpperCase() + metric.slice(1)
+                    } Emissions`,
+                  },
+                },
+                elements: {
+                  line: {
+                    borderWidth: 2,
+                  },
+                },
+              }}
+            />
           </div>
-          <Line
-            data={createIndividualChartData(metricType as keyof Metrics)}
-            options={{
-              responsive: true,
-              plugins: {
-                legend: {
-                  position: "top",
-                  labels: {
-                    usePointStyle: true,
-                    pointStyle: "line",
-                  },
-                },
-              },
-              scales: {
-                x: {
-                  title: {
-                    display: true,
-                    text: "Years",
-                    font: { size: 14 },
-                  },
-                },
-                y: {
-                  title: {
-                    display: true,
-                    text: "Values",
-                    font: { size: 14 },
-                  },
-                },
-              },
-            }}
-          />
-        </div>
-      ))}
-
-      <div className="bg-white p-4 rounded shadow mb-6">
-        <h3 className="text-center font-semibold mb-2">Combined Metrics</h3>
-        <Line
-          data={createCombinedChartData()}
-          options={{
-            responsive: true,
-            plugins: {
-              legend: {
-                position: "top",
-                labels: {
-                  usePointStyle: true,
-                  pointStyle: "line",
-                },
-              },
-            },
-            scales: {
-              x: {
-                title: { display: true, text: "Years", font: { size: 14 } },
-              },
-              y: {
-                title: { display: true, text: "Values", font: { size: 14 } },
-              },
-            },
-          }}
-        />
+        ))}
       </div>
+
+      <h2 className="text-xl font-semibold mt-12 mb-4">Combined Metrics</h2>
+      <Line
+        data={createCombinedChartData()}
+        options={{
+          responsive: true,
+          plugins: {
+            legend: {
+              position: "top",
+              labels: {
+                usePointStyle: true,
+                pointStyle: "line", // Show lines instead of rectangles
+                boxWidth: 50,
+              },
+            },
+            title: {
+              display: true,
+              text: "Combined Sustainability Metrics",
+            },
+          },
+          elements: {
+            line: {
+              borderWidth: 2,
+            },
+          },
+        }}
+      />
     </div>
   );
 };

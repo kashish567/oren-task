@@ -258,136 +258,135 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  return (
-    <div className="max-w-screen-lg mx-auto px-4 py-8">
-      <header className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-        <h1 className="text-2xl md:text-3xl font-bold">
-          Sustainability Dashboard
-        </h1>
-        <div className="flex gap-4">
-          <button
-            onClick={handleExportCSV}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg"
-          >
-            Export as CSV
-          </button>
-          <button
-            onClick={handleExportJSON}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg"
-          >
-            Export as JSON
-          </button>
-          <button
+  // Wrap each chart in a responsive container and update container styles for mobile
+return (
+  <div className="max-w-screen-lg mx-auto px-2 sm:px-4 py-8">
+    <header className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+      <h1 className="text-2xl md:text-3xl font-bold">Sustainability Dashboard</h1>
+      <div className="flex gap-4">
+        <button
+          onClick={handleExportCSV}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+        >
+          Export as CSV
+        </button>
+        <button
+          onClick={handleExportJSON}
+          className="px-4 py-2 bg-green-600 text-white rounded-lg"
+        >
+          Export as JSON
+        </button>
+        <button
             onClick={handleSaveData}
             className="px-4 py-2 bg-red-600 text-white rounded-lg"
           >
             Save Metrics
           </button>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
+        <button
+          onClick={handleLogout}
+          className="px-4 py-2 bg-red-600 text-white rounded-lg"
+        >
+          Logout
+        </button>
+      </div>
+    </header>
 
       <div className="mb-6 grid grid-cols-2 sm:grid-cols-5 gap-2">
         {years.map((year, index) => (
           <input
-            key={index}
+            key={`year-${index}`}
             type="text"
             value={year}
             onChange={(e) => handleYearChange(index, e.target.value)}
-            className="border p-1 rounded text-center"
+            className="border px-2 py-1 rounded text-center border-gray-300"
+            placeholder={`Year ${index + 1}`}
           />
         ))}
       </div>
 
-      <div className="space-y-8">
-        {["carbon", "water", "waste"].map((metric) => (
-          <div key={metric}>
-            <h2 className="text-xl font-semibold mb-4">
-              {metric.charAt(0).toUpperCase() + metric.slice(1)} Metrics
-            </h2>
-            <div className="mb-4 grid grid-cols-5 gap-2">
-              {metrics[metric as keyof Metrics].map((value, index) => (
-                <input
-                  key={index}
-                  type="number"
-                  value={value}
-                  onChange={(e) =>
-                    handleMetricChange(
-                      metric as keyof Metrics,
-                      index,
-                      e.target.value
-                    )
-                  }
-                  className={`border p-1 rounded text-center ${
-                    errors[metric as keyof Metrics][index]
-                      ? "border-red-500"
-                      : ""
-                  }`}
-                />
-              ))}
-            </div>
-            <Line
-              data={createIndividualChartData(metric as keyof Metrics)}
-              options={{
-                responsive: true,
-                plugins: {
-                  legend: {
-                    position: "top",
-                    labels: {
-                      usePointStyle: true,
-                      pointStyle: "line", // Show lines instead of rectangles
-                      boxWidth: 50,
-                    },
+      {["carbon", "water", "waste"].map((metricType) => (
+        <div key={metricType} className="mb-6">
+          <h2 className="text-lg font-semibold mb-2">
+            {metricType.charAt(0).toUpperCase() + metricType.slice(1)} Metrics
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            {metrics[metricType as keyof Metrics].map((value, index) => (
+              <input
+                key={`${metricType}-${index}`}
+                type="number"
+                value={value}
+                onChange={(e) =>
+                  handleMetricChange(
+                    metricType as keyof Metrics,
+                    index,
+                    e.target.value
+                  )
+                }
+                className={`border px-2 py-1 rounded text-center border-gray-300 ${
+                  errors[metricType as keyof Metrics][index]
+                    ? "border-red-500"
+                    : ""
+                }`}
+                placeholder="Enter value"
+              />
+            ))}
+          </div>
+          <Line
+            data={createIndividualChartData(metricType as keyof Metrics)}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: "top",
+                  labels: {
+                    usePointStyle: true,
+                    pointStyle: "line",
                   },
                   title: {
                     display: true,
-                    text: `${
-                      metric.charAt(0).toUpperCase() + metric.slice(1)
-                    } Emissions`,
+                    text: "Years",
+                    font: { size: 14 },
                   },
                 },
-                elements: {
-                  line: {
-                    borderWidth: 2,
+                y: {
+                  title: {
+                    display: true,
+                    text: "Values",
+                    font: { size: 14 },
                   },
                 },
-              }}
-            />
-          </div>
-        ))}
-      </div>
+              },
+            }}
+          />
+        </div>
+      ))}
 
-      <h2 className="text-xl font-semibold mt-12 mb-4">Combined Metrics</h2>
-      <Line
-        data={createCombinedChartData()}
-        options={{
-          responsive: true,
-          plugins: {
-            legend: {
-              position: "top",
-              labels: {
-                usePointStyle: true,
-                pointStyle: "line", // Show lines instead of rectangles
-                boxWidth: 50,
+      <div className="bg-white p-4 rounded shadow mb-6">
+        <h3 className="text-center font-semibold mb-2">Combined Metrics</h3>
+        <Line
+          data={createCombinedChartData()}
+          options={{
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "top",
+                labels: {
+                  usePointStyle: true,
+                  pointStyle: "line",
+                },
               },
             },
-            title: {
-              display: true,
-              text: "Combined Sustainability Metrics",
+            scales: {
+              x: {
+                title: { display: true, text: "Years", font: { size: 14 } },
+              },
+              y: {
+                title: { display: true, text: "Values", font: { size: 14 } },
+              },
             },
-          },
-          elements: {
-            line: {
-              borderWidth: 2,
-            },
-          },
-        }}
-      />
+          }}
+        />
+      </div>
     </div>
   );
 };

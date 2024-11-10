@@ -208,14 +208,28 @@ const DashboardPage: React.FC = () => {
     const getColorForValue = (metricType: keyof Metrics, index: number) => {
       if (metrics[metricType][index] > benchmarks[metricType][index]) {
         return "dark red"; // Dark Red for above benchmark
-      } else if (
-        metrics[metricType][index] >= benchmarks[metricType][index] * 0.9
-      ) {
+      } else if (metrics[metricType][index] >= benchmarks[metricType][index] * 0.9) {
         return "orange"; // Orange for similar or a bit less than benchmark
       } else {
         return "green"; // Green for below benchmark
       }
     };
+  
+    // Calculate averages for each metric
+    const totalYears = years.length;
+    const avgCarbon = metrics.carbon.reduce((sum, value) => sum + value, 0) / totalYears;
+    const avgWater = metrics.water.reduce((sum, value) => sum + value, 0) / totalYears;
+    const avgWaste = metrics.waste.reduce((sum, value) => sum + value, 0) / totalYears;
+  
+    // Calculate total for percentage calculations
+    const totalCarbon = metrics.carbon.reduce((sum, value) => sum + value, 0);
+    const totalWater = metrics.water.reduce((sum, value) => sum + value, 0);
+    const totalWaste = metrics.waste.reduce((sum, value) => sum + value, 0);
+  
+    // Calculate percentage averages (as numbers)
+    const percentCarbon = (avgCarbon / totalCarbon) * 100;
+    const percentWater = (avgWater / totalWater) * 100;
+    const percentWaste = (avgWaste / totalWaste) * 100;
   
     const data = [
       ...years.map((year, index) => ({
@@ -233,12 +247,17 @@ const DashboardPage: React.FC = () => {
           color: getColorForValue("waste", index),
         },
       })),
-      // Removing color logic for Average and Total
       {
         Year: "Average",
-        Carbon: { value: average.carbon.toFixed(2), color: "" },
-        Water: { value: average.water.toFixed(2), color: "" },
-        Waste: { value: average.waste.toFixed(2), color: "" },
+        Carbon: { value: avgCarbon.toFixed(2), color: "" },
+        Water: { value: avgWater.toFixed(2), color: "" },
+        Waste: { value: avgWaste.toFixed(2), color: "" },
+      },
+      {
+        Year: "Percentage Average",
+        Carbon: { value: percentCarbon.toFixed(2), color: "" },
+        Water: { value: percentWater.toFixed(2), color: "" },
+        Waste: { value: percentWaste.toFixed(2), color: "" },
       },
       {
         Year: "Total",
@@ -263,10 +282,25 @@ const DashboardPage: React.FC = () => {
     link.click();
   };
   
-  
   const handleExportJSON = () => {
     const { total, average } = calculateMetricsSummary();
-
+  
+    // Calculate averages for each metric
+    const totalYears = years.length;
+    const avgCarbon = metrics.carbon.reduce((sum, value) => sum + value, 0) / totalYears;
+    const avgWater = metrics.water.reduce((sum, value) => sum + value, 0) / totalYears;
+    const avgWaste = metrics.waste.reduce((sum, value) => sum + value, 0) / totalYears;
+  
+    // Calculate total for percentage calculations
+    const totalCarbon = metrics.carbon.reduce((sum, value) => sum + value, 0);
+    const totalWater = metrics.water.reduce((sum, value) => sum + value, 0);
+    const totalWaste = metrics.waste.reduce((sum, value) => sum + value, 0);
+  
+    // Calculate percentage averages (as numbers)
+    const percentCarbon = (avgCarbon / totalCarbon) * 100;
+    const percentWater = (avgWater / totalWater) * 100;
+    const percentWaste = (avgWaste / totalWaste) * 100;
+  
     const data = {
       records: years.map((year, index) => ({
         Year: year,
@@ -275,21 +309,34 @@ const DashboardPage: React.FC = () => {
         Waste: metrics.waste[index],
       })),
       summary: {
-        Average: { Carbon: average.carbon, Water: average.water, Waste: average.waste },
-        Total: { Carbon: total.carbon, Water: total.water, Waste: total.waste },
+        Average: {
+          Carbon: avgCarbon,
+          Water: avgWater,
+          Waste: avgWaste,
+        },
+        PercentageAverage: {
+          Carbon: percentCarbon,
+          Water: percentWater,
+          Waste: percentWaste,
+        },
+        Total: {
+          Carbon: total.carbon,
+          Water: total.water,
+          Waste: total.waste,
+        },
       },
     };
-
+  
     const json = JSON.stringify(data, null, 2);
     const blob = new Blob([json], { type: "application/json" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.setAttribute("download", "sustainability_metrics.json");
-
+  
     document.body.appendChild(link);
     link.click();
   };
-
+  
   const handleSaveData = async () => {
     const token = localStorage.getItem("accessToken");
     if (!token) return;

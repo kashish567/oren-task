@@ -283,7 +283,7 @@ const DashboardPage: React.FC = () => {
   };
   
   const handleExportJSON = () => {
-    const { total, average } = calculateMetricsSummary();
+    const { total} = calculateMetricsSummary();
   
     // Calculate averages for each metric
     const totalYears = years.length;
@@ -340,24 +340,25 @@ const DashboardPage: React.FC = () => {
   const handleSaveData = async () => {
     const token = localStorage.getItem("accessToken");
     if (!token) return;
-
-    for (let i = 0; i < years.length; i++) {
-      const year = years[i];
-      const carbon = metrics.carbon[i];
-      const water = metrics.water[i];
-      const waste = metrics.waste[i];
-
-      try {
-        const res = await axios.post(
-          "/api/metrix",
-          { carbon, water, waste, year },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        console.log(res.data);
-      } catch (error) {
-        console.error(error);
-      }
+  
+    // Prepare the metrics data in a single array for batch request
+    const data = years.map((year, index) => ({
+      year,
+      carbon: metrics.carbon[index],
+      water: metrics.water[index],
+      waste: metrics.waste[index],
+    }));
+  
+    try {
+      const res = await axios.post(
+        "/api/metrix",
+        { metrics: data }, // send all metrics data at once
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+  
+      console.log(res.data);
+    } catch (error) {
+      console.error("Error saving data:", error);
     }
   };
 

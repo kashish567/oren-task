@@ -203,7 +203,7 @@ const DashboardPage: React.FC = () => {
   };
 
   const handleExportCSV = () => {
-    const { total, average } = calculateMetricsSummary();
+    const { total } = calculateMetricsSummary();
   
     const getColorForValue = (metricType: keyof Metrics, index: number) => {
       if (metrics[metricType][index] > benchmarks[metricType][index]) {

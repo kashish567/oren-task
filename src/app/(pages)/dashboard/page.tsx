@@ -81,9 +81,7 @@ const DashboardPage: React.FC = () => {
     labels: years,
     datasets: [
       {
-        label: `User ${
-          metricType.charAt(0).toUpperCase() + metricType.slice(1)
-        }`,
+        label: `User ${metricType.charAt(0).toUpperCase() + metricType.slice(1)}`,
         data: metrics[metricType],
         borderColor:
           metricType === "carbon"
@@ -96,9 +94,7 @@ const DashboardPage: React.FC = () => {
         fill: false,
       },
       {
-        label: `Benchmark ${
-          metricType.charAt(0).toUpperCase() + metricType.slice(1)
-        }`,
+        label: `Benchmark ${metricType.charAt(0).toUpperCase() + metricType.slice(1)}`,
         data: benchmarks[metricType],
         borderColor: "#FF5733",
         borderDash: [5, 5],
@@ -190,25 +186,75 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await axios.post("/api/logout");
-      dispatch(logout());
-      router.push("/");
-    } catch (error) {
-      console.error("Logout failed", error);
-    }
+  const calculateMetricsSummary = () => {
+    const total = {
+      carbon: metrics.carbon.reduce((sum, value) => sum + value, 0),
+      water: metrics.water.reduce((sum, value) => sum + value, 0),
+      waste: metrics.waste.reduce((sum, value) => sum + value, 0),
+    };
+
+    const average = {
+      carbon: total.carbon / metrics.carbon.length,
+      water: total.water / metrics.water.length,
+      waste: total.waste / metrics.waste.length,
+    };
+
+    return { total, average };
   };
 
   const handleExportCSV = () => {
-    const data = years.map((year, index) => ({
-      Year: year,
-      Carbon: metrics.carbon[index],
-      Water: metrics.water[index],
-      Waste: metrics.waste[index],
-    }));
-
-    const csv = Papa.unparse(data);
+    const { total, average } = calculateMetricsSummary();
+  
+    const getColorForValue = (metricType: keyof Metrics, index: number) => {
+      if (metrics[metricType][index] > benchmarks[metricType][index]) {
+        return "dark red"; // Dark Red for above benchmark
+      } else if (
+        metrics[metricType][index] >= benchmarks[metricType][index] * 0.9
+      ) {
+        return "orange"; // Orange for similar or a bit less than benchmark
+      } else {
+        return "green"; // Green for below benchmark
+      }
+    };
+  
+    const data = [
+      ...years.map((year, index) => ({
+        Year: year,
+        Carbon: {
+          value: metrics.carbon[index],
+          color: getColorForValue("carbon", index),
+        },
+        Water: {
+          value: metrics.water[index],
+          color: getColorForValue("water", index),
+        },
+        Waste: {
+          value: metrics.waste[index],
+          color: getColorForValue("waste", index),
+        },
+      })),
+      // Removing color logic for Average and Total
+      {
+        Year: "Average",
+        Carbon: { value: average.carbon.toFixed(2), color: "" },
+        Water: { value: average.water.toFixed(2), color: "" },
+        Waste: { value: average.waste.toFixed(2), color: "" },
+      },
+      {
+        Year: "Total",
+        Carbon: { value: total.carbon.toFixed(2), color: "" },
+        Water: { value: total.water.toFixed(2), color: "" },
+        Waste: { value: total.waste.toFixed(2), color: "" },
+      },
+    ];
+  
+    const csv = Papa.unparse(data.map((row) => ({
+      Year: row.Year,
+      Carbon: row.Carbon.color ? `${row.Carbon.value} (${row.Carbon.color})` : row.Carbon.value,
+      Water: row.Water.color ? `${row.Water.value} (${row.Water.color})` : row.Water.value,
+      Waste: row.Waste.color ? `${row.Waste.value} (${row.Waste.color})` : row.Waste.value,
+    })));
+  
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -216,16 +262,25 @@ const DashboardPage: React.FC = () => {
     document.body.appendChild(link);
     link.click();
   };
-
+  
+  
   const handleExportJSON = () => {
-    const data = years.map((year, index) => ({
-      Year: year,
-      Carbon: metrics.carbon[index],
-      Water: metrics.water[index],
-      Waste: metrics.waste[index],
-    }));
+    const { total, average } = calculateMetricsSummary();
 
-    const json = JSON.stringify({ data }, null, 2);
+    const data = {
+      records: years.map((year, index) => ({
+        Year: year,
+        Carbon: metrics.carbon[index],
+        Water: metrics.water[index],
+        Waste: metrics.waste[index],
+      })),
+      summary: {
+        Average: { Carbon: average.carbon, Water: average.water, Waste: average.waste },
+        Total: { Carbon: total.carbon, Water: total.water, Waste: total.waste },
+      },
+    };
+
+    const json = JSON.stringify(data, null, 2);
     const blob = new Blob([json], { type: "application/json" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -256,6 +311,16 @@ const DashboardPage: React.FC = () => {
       } catch (error) {
         console.error(error);
       }
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await axios.post("/api/logout");
+      dispatch(logout());
+      router.push("/");
+    } catch (error) {
+      console.error("Logout failed", error);
     }
   };
 
